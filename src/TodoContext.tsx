@@ -1,4 +1,5 @@
 import {
+   
     createContext,
     useContext,
     useEffect,
@@ -8,7 +9,8 @@ import {
     type ReactNode
 } from "react"
 
-import type { Todo } from "./types"
+export type Todo = {id:string;title:string; completed:boolean};
+export type TodoFilter = "all" | "active" | "completed";
 
 const STORAGE_KEY = "todo-context-app:todos";
 
@@ -26,7 +28,7 @@ type TodoContextValue = {
     addTodo: (title: string) => void;
     toggleTodo: (title: string) => void;
     deleteTodo: (title: string) => void;
-    cleatCompleted: (title: string) => void;
+    clearCompleted: (title: string) => void;
 };
 
 const TodoContext = createContext<TodoContextValue | null>(null);
@@ -54,6 +56,7 @@ const loadTodos = (): Todo[] => {
     } catch(e) {
         console.warn("Не удалось прочитать сохраненный список задач.");
     }
+    return [];
 }
 
 const todoReducer = (todos: Todo[], action: TodoAction): Todo[] => {
@@ -100,7 +103,7 @@ export function TodoProvider({ children }: {children: ReactNode}) {
     }, [todos]);
 
     const value = useMemo<TodoContextValue>(() => {
-            const completedCount = todos.filter(todo => todo.complete).length;
+            const completedCount = todos.filter(todo => todo.completed).length;
 
             return {
                 todos,
@@ -110,7 +113,22 @@ export function TodoProvider({ children }: {children: ReactNode}) {
                 addTodo: (title: string) => dispatch({type:"add", title}),
                 toggleTodo: (id: string) => dispatch({type:"toggle", id}),
                 deleteTodo: (id: string) => dispatch({type:"delete", id}),
-                cleatCompleted: () => dispatch({type:"clearCompleted"}),
+                clearCompleted: () => dispatch({type:"clearCompleted"}),
             }
-    });
+    },[storageError,todos]);
+
+
+
+    return <TodoContext.Provider value ={value}>{children}</TodoContext.Provider>
+}
+    
+
+export function useTodos() {
+    const context = useContext(TodoContext);
+    
+    if(!context)
+    {
+         throw new Error ("useTodos  должен использоваться внутри TodoProvide")
+    }
+    return context;
 }
