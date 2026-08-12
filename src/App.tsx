@@ -1,12 +1,42 @@
-import { useState, type FormEvent } from "react";
+import { useMemo,useState type FormEvent } from "react";
+import  {useTodos,type Todo,type TodoFilter} from './TodoContext' ;
 
-type Task = { title: string };
+<button type="submit" className="rounded-xl bg-[orange] text-white font-bold">Добавить </button>
+
+
+
+const filters: {value:TodoFilter, label:string  } []= [
+  {value:"all",label:"Все"},
+  {value:"active",label:"Активные"},
+  {value:"completed",label:"Готово"},
+];
+
+
+
 
 export default function App() {
+  const {
+    todos,
+    activeCount,
+    comletedCount,
+    storageError,
+    addTodo,
+    ToggleTodo,
+    deleteTodo,
+    clearCompleted} = useTodos();
 
-  const [state, setState] = useState(0);
-  const [list, setList] = useState<Task[]>([]);
+  
+
   const [title, setTitle] = useState("");
+  const [filter,setFilter] = useState<TodoFilter>("all");
+  const visibleTodos = useMemo(() => {
+    todos.filter ((todo) =>{
+      if (filter =="active") return !todo.completed;
+      if (filter =="completed") return todo.completed;
+      return true;
+    });
+  },[todos])
+
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
       event?.preventDefault();
@@ -16,24 +46,25 @@ export default function App() {
       setList((prev) => ([...prev, { title: title.trim()}]))
   };
 
-  return <div>
+  return (
+  <main className={["grid min-h-screen min-w-80 place-items-center",
+    "bg-white px-5 py-12 text-black"].join(" ")}>
+      <section className={["w-full max-w-[680px] overflow-hidden rounded-3xl",
+        "border border -[#2751f0]/8 bg-white"].join(" ")}>
+           <header className={["bg-[#4f3] px-10 pt-11 pb-8 text-white"].join(" ")}>
+            <p className = "m-0 text-xs font-bold uppercase"> План на сегодня</p>
+            <h1 id="page-title" className="mt-1 mb-2 text-3xl font-bold">Мои задачи</h1>
+            <p className ="m-0 text-zinc-400">{activeCount ? 'Осталось выполнить: ${activeCoune}':"Все выполнено"}</p>
+           </header>
+           <form className="flex gap-2.5 px-10 pt-8 pb-5"
+            onSubmit={handleSubmit}>
+              <label htmlFor="new-todo">Новая задача</label>
+              <input type="text" id="new-todo" value={title} onChange={(event)=>setTitle(event.currentTarget.value)}></input>
 
-    <form onSubmit={handleSubmit}>
-        <label htmlFor="title">Название задачи</label>
-        <input
-         type="text" 
-         id="title" 
-         name="title" 
-         value={title}
-         onChange={((event) => setTitle(event.currentTarget.value))}/>
-        <button>Сохранить</button>
-    </form>
+            </form>
+          </section>
+    </main>
 
-    {list.map((task, index) => {
-      return <div key={task.title}>{task.title}</div>
-    })}
-
-    <button 
-    onClick={() => setState((prev) => prev + 1)}>clck | {state}</button>
-  </div>
+  
+      );  
 }
